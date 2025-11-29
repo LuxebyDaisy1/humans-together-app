@@ -2,57 +2,62 @@
 import { useState } from "react";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hi, I'm here with you. What's on your mind today?" }
-  ]);
+  const [message, setMessage] = useState("");
+  const [reply, setReply] = useState("");
 
-  const [input, setInput] = useState("");
+  async function sendMessage() {
+    if (!message.trim()) return;
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+    const res = await fetch("/api", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
 
-    const userMessage = { sender: "user", text: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput("");
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage }),
-      });
-
-      const data = await res.json();
-      setMessages(prev => [...prev, { sender: "bot", text: data.reply }]);
-    } catch (error) {
-      setMessages(prev => [
-        ...prev,
-        { sender: "bot", text: "Error: could not connect to AI." }
-      ]);
-    }
-  };
+    const data = await res.json();
+    setReply(data.reply || "Error");
+  }
 
   return (
-    <div style={{ padding: "20px", color: "white" }}>
-      <h2>Chat</h2>
+    <div
+      style={{
+        maxWidth: "600px",
+        margin: "80px auto",
+        padding: "20px",
+        fontFamily: "sans-serif",
+      }}
+    >
+      <h1 style={{ marginBottom: "20px" }}>Chat</h1>
 
-      <div style={{ marginBottom: "20px" }}>
-        {messages.map((m, i) => (
-          <p key={i}>
-            <strong>{m.sender}:</strong> {m.text}
-          </p>
-        ))}
-      </div>
+      {reply && (
+        <p style={{ marginBottom: "20px", color: "#ccc" }}>
+          <strong>bot:</strong> {reply}
+        </p>
+      )}
 
-      <input
-        style={{ padding: "10px", width: "300px", color: "black" }}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Type your message..."
+        style={{
+          width: "100%",
+          height: "100px",
+          padding: "10px",
+          marginBottom: "10px",
+          fontSize: "16px",
+        }}
       />
 
       <button
-        style={{ marginLeft: "10px", padding: "10px" }}
         onClick={sendMessage}
+        style={{
+          padding: "12px 20px",
+          fontSize: "16px",
+          background: "#333",
+          color: "white",
+          border: "none",
+          cursor: "pointer",
+        }}
       >
         Send
       </button>
